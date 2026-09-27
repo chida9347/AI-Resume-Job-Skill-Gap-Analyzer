@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node and build output
+node_modules/
+dist/
+
+# Local environment and editor configuration
+.env
+.env.*
+!.env.example
+.vscode/
+
+# Generated resume exports
+*.pdf
