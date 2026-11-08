@@ -47,6 +47,10 @@ SKILLS = {
     "spark": ["apache spark", "pyspark", "spark"],
 }
 
+# Keep this taxonomy intentionally small and explicit: job descriptions contain
+# many ordinary nouns that should not be treated as competencies.
+SOFT_SKILLS = {"communication", "leadership", "project management", "agile"}
+
 
 def _contains_phrase(text: str, phrase: str) -> bool:
     pattern = r"(?<![a-z0-9])" + re.escape(phrase.strip()) + r"(?![a-z0-9])"
@@ -84,6 +88,50 @@ def extract_skills(text: str) -> list[str]:
     ]
 
 
+def analyze_job_description(text: str) -> dict[str, list[str]]:
+    """Extract known competencies and separate explicitly preferred skills."""
+    skills = extract_skills(text)
+    preferred_found: set[str] = set()
+    required_found: set[str] = set()
+    preferred_context = False
+    markers = re.compile(r"\b(preferred|nice\s+to\s+have|bonus|desired|required|minimum|mandatory|must(?:-have)?)\b", re.I)
+    preferred_heading = re.compile(r"^\s*(?:preferred|nice\s+to\s+have|bonus|desired)(?:\s+skills?)?\s*:?\s*$", re.I)
+    required_heading = re.compile(r"^\s*(?:required|minimum|mandatory)(?:\s+qualifications?|\s+skills?)?\s*:?\s*$", re.I)
+
+    for line in text.splitlines():
+        if preferred_heading.match(line):
+            preferred_context = True
+        elif required_heading.match(line) or re.match(r"^\s*(?:qualifications|responsibilities|what you(?:'|’)ll do)\b", line, re.I):
+            preferred_context = False
+        line_markers = list(markers.finditer(line))
+        for skill in skills:
+            occurrence_positions = [
+                match.start()
+                for alias in SKILLS[skill]
+                for match in re.finditer(
+                    r"(?<![a-z0-9])" + re.escape(alias.strip()) + r"(?![a-z0-9])",
+                    line,
+                    re.I,
+                )
+            ]
+            for position in occurrence_positions:
+                preceding = next((marker for marker in reversed(line_markers) if marker.start() < position), None)
+                state = preferred_context
+                if preceding:
+                    state = preceding.group(0).casefold() in {"preferred", "nice to have", "bonus", "desired"}
+                (preferred_found if state else required_found).add(skill)
+
+    # If a skill appears in both contexts, keep the stronger required signal.
+    preferred = [skill for skill in skills if skill in preferred_found and skill not in required_found]
+    required = [skill for skill in skills if skill not in preferred]
+    return {
+        "required_skills": required,
+        "preferred_skills": preferred,
+        "soft_skills": [skill for skill in skills if skill in SOFT_SKILLS],
+        "technical_skills": [skill for skill in skills if skill not in SOFT_SKILLS],
+    }
+
+
 @lru_cache(maxsize=1)
 def _embedding_model():
     try:
@@ -116,7 +164,7 @@ def _semantic_pairs(missing: Iterable[str], resume_skills: Iterable[str]) -> set
         return set()
 
 
-def compare_skills(resume_skills: list[str], job_skills: list[str]) -> dict:
+def compare_skills(resume_skills: list[str], job_skills: list[str], preferred_skills: list[str] | None = None) -> dict:
     resume_set = {skill.lower() for skill in resume_skills}
     required = list(dict.fromkeys(skill.lower() for skill in job_skills))
     matched = [skill for skill in required if skill in resume_set]
@@ -124,12 +172,17 @@ def compare_skills(resume_skills: list[str], job_skills: list[str]) -> dict:
     semantic_matches = _semantic_pairs(unmatched, resume_set)
     matched.extend(skill for skill in unmatched if skill in semantic_matches)
     missing = [skill for skill in unmatched if skill not in semantic_matches]
+    preferred = list(dict.fromkeys(skill.lower() for skill in (preferred_skills or [])))
+    preferred_matched = [skill for skill in preferred if skill in resume_set]
+    preferred_missing = [skill for skill in preferred if skill not in resume_set]
     score = round(len(matched) / len(required) * 100) if required else 0
     return {
         "matched_skills": matched,
         "missing_skills": missing,
         "similarity_score": score,
         "ats_score": score,
+        "matched_preferred_skills": preferred_matched,
+        "missing_preferred_skills": preferred_missing,
     }
 
 

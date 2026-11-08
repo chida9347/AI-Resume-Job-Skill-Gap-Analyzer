@@ -7,6 +7,9 @@ venv/
 # Node and build output
 node_modules/
 dist/
+.npm-cache/
+.task-temp/
+.task-packages/
 
 # Local environment and editor configuration
 .env

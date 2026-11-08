@@ -7,6 +7,10 @@ export default function SkillsSnapshot({ comparison }) {
     <div className="skill-group"><h3><span className="status-dot dot-green" /> Found in both <span className="count-pill">{comparison.matched_skills.length}</span></h3><div className="skill-list">{comparison.matched_skills.length ? comparison.matched_skills.map((skill) => <span className="skill-tag tag-match" key={skill}>{skill}</span>) : <p className="empty-note">No requested skills were found in the resume text.</p>}</div></div>
     <div className="panel-divider" />
     <div className="skill-group"><h3><span className="status-dot dot-coral" /> Not found in resume <span className="count-pill">{comparison.missing_skills.length}</span></h3><div className="skill-list">{comparison.missing_skills.length ? comparison.missing_skills.map((skill) => <span className="skill-tag tag-missing" key={skill}>{skill}</span>) : <p className="empty-note">All detected job skills appear in the resume text.</p>}</div></div>
+    {comparison.matched_preferred_skills?.length + comparison.missing_preferred_skills?.length > 0 && <>
+      <div className="panel-divider" />
+      <div className="skill-group"><h3><span className="status-dot dot-green" /> Preferred skills <span className="count-pill">{comparison.matched_preferred_skills.length}/{comparison.matched_preferred_skills.length + comparison.missing_preferred_skills.length}</span></h3><div className="skill-list">{comparison.matched_preferred_skills.map((skill) => <span className="skill-tag tag-match" key={`matched-${skill}`}>{skill}</span>)}{comparison.missing_preferred_skills.map((skill) => <span className="skill-tag" key={`missing-${skill}`}>{skill}</span>)}</div></div>
+    </>}
     <div className="panel-footnote"><CircleHelp size={14} /> This checks resume wording; it cannot tell whether you have an unlisted skill.</div>
   </section>
 }

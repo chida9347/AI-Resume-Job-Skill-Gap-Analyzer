@@ -7,6 +7,7 @@ import {
 import { jsPDF } from 'jspdf'
 import ATSPanel from './components/ATSPanel.jsx'
 import InterviewPreview from './components/InterviewPreview.jsx'
+import ResumeEditChat from './components/ResumeEditChat.jsx'
 import JobInput from './components/JobInput.jsx'
 import LearningPaths from './components/LearningPaths.jsx'
 import ResumeRewrite from './components/ResumeRewrite.jsx'
@@ -14,7 +15,7 @@ import ResumeSignals from './components/ResumeSignals.jsx'
 import SkillsSnapshot from './components/SkillsSnapshot.jsx'
 import SuggestionsPanel from './components/SuggestionsPanel.jsx'
 import UploadCard from './components/UploadCard.jsx'
-import { analyzeResume, getAtsScore, getInterviewTips, getLearningPaths, rewriteForRole, updateResume } from './services/api.js'
+import { analyzeResume, editResumeChat, getAtsScore, getInterviewTips, getLearningPaths, rewriteForRole, updateResume } from './services/api.js'
 
 const steps = ['Analyze', 'Insights', 'Edit resume', 'Interview prep']
 
@@ -44,6 +45,8 @@ function App() {
   const [tips, setTips] = useState(null)
   const [loading, setLoading] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [chatBusy, setChatBusy] = useState(false)
+  const [fitToOnePage, setFitToOnePage] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef(null)
 
@@ -93,6 +96,7 @@ function App() {
       return
     }
     setLoading(true)
+    setFitToOnePage(false)
     setError('')
     try {
       const result = await analyzeResume(file, jobDescription)
@@ -145,12 +149,24 @@ function App() {
     setPage('editor')
   }
 
+  async function applyChatEdit(instruction) {
+    setChatBusy(true)
+    try {
+      const result = await editResumeChat(resumeText, instruction)
+      if (result.changed) setResumeText(result.updated_resume_text)
+      if (typeof result.fit_to_one_page === 'boolean') setFitToOnePage(result.fit_to_one_page)
+      return result
+    } finally {
+      setChatBusy(false)
+    }
+  }
+
   function downloadTextAsPdf(text, filename, targetRole = '') {
     if (!text?.trim()) return
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' })
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
-    const margin = 54
+    const margin = fitToOnePage ? 30 : 54
     const contentWidth = pageWidth - margin * 2
     const sourceLines = text.replace(/\r/g, '').split('\n')
     const firstContentIndex = sourceLines.findIndex((line) => line.trim())
@@ -181,42 +197,47 @@ function App() {
     pdf.setDrawColor(36, 75, 62)
     pdf.setLineWidth(3)
     pdf.line(margin, 35, pageWidth - margin, 35)
-    let y = 70
+    let y = fitToOnePage ? 43 : 70
     pdf.setTextColor(24, 33, 31)
     pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(23)
+    pdf.setFontSize(fitToOnePage ? 16 : 23)
     pdf.text(name, margin, y)
-    y += 18
+    y += fitToOnePage ? 12 : 18
 
     if (targetRole.trim()) {
       pdf.setTextColor(87, 105, 82)
       pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(9)
+      pdf.setFontSize(fitToOnePage ? 7 : 9)
       pdf.text(`TARGET ROLE  |  ${targetRole.trim()}`, margin, y)
-      y += 15
+      y += fitToOnePage ? 9 : 15
     }
 
     if (preamble.length) {
       pdf.setTextColor(91, 99, 93)
       pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(9)
+      pdf.setFontSize(fitToOnePage ? 7 : 9)
       for (const line of preamble) {
         const wrapped = pdf.splitTextToSize(line, contentWidth)
         for (const row of wrapped) {
           pdf.text(row, margin, y)
-          y += 12
+          y += fitToOnePage ? 8 : 12
         }
       }
     }
 
-    y += 4
+    y += fitToOnePage ? 2 : 4
     pdf.setDrawColor(218, 222, 212)
     pdf.setLineWidth(0.7)
     pdf.line(margin, y, pageWidth - margin, y)
-    y += 18
+    y += fitToOnePage ? 9 : 18
+    let didOverflow = false
 
     function ensureSpace(height) {
-      if (y + height > pageHeight - 48) {
+      if (y + height > pageHeight - (fitToOnePage ? 30 : 48)) {
+        if (fitToOnePage) {
+          didOverflow = true
+          return
+        }
         pdf.addPage()
         y = 52
       }
@@ -225,7 +246,7 @@ function App() {
     function writeBodyLine(rawLine, isExperience = false) {
       const trimmed = rawLine.trim()
       if (!trimmed) {
-        y += 5
+        y += fitToOnePage ? 2 : 5
         return
       }
       const bulletMatch = trimmed.match(/^(?:[-*+]\s+|\d+[.)]\s+)(.*)$/)
@@ -235,34 +256,36 @@ function App() {
       const indent = isBullet ? 14 : 0
       const rows = pdf.splitTextToSize(content, contentWidth - indent)
       pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(10)
+      pdf.setFontSize(fitToOnePage ? 7 : 10)
       pdf.setTextColor(45, 53, 48)
       for (let index = 0; index < rows.length; index += 1) {
-        ensureSpace(14)
+        ensureSpace(fitToOnePage ? 8 : 14)
+        if (didOverflow) return
         if (isBullet && index === 0) {
           pdf.setFillColor(119, 148, 72)
           pdf.circle(margin + 3, y - 3, 1.6, 'F')
         }
         pdf.text(rows[index], margin + indent, y)
-        y += 14
+        y += fitToOnePage ? 8 : 14
       }
     }
 
     for (const section of sections) {
       if (!section.lines.some((line) => line.trim())) continue
-      ensureSpace(34)
+      ensureSpace(fitToOnePage ? 20 : 34)
+      if (didOverflow) break
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(11)
+      pdf.setFontSize(fitToOnePage ? 8 : 11)
       pdf.setTextColor(36, 75, 62)
       pdf.text(section.title.toUpperCase(), margin, y)
-      y += 7
+      y += fitToOnePage ? 4 : 7
       pdf.setDrawColor(221, 226, 215)
       pdf.setLineWidth(0.6)
       pdf.line(margin, y, pageWidth - margin, y)
-      y += 14
+      y += fitToOnePage ? 7 : 14
       const isExperience = /experience|employment history|work history/i.test(section.title)
       for (const line of section.lines) writeBodyLine(line, isExperience)
-      y += 7
+      y += fitToOnePage ? 3 : 7
     }
 
     if (!sections.length) {
@@ -270,6 +293,10 @@ function App() {
     }
 
     const pageCount = pdf.getNumberOfPages()
+    if (fitToOnePage && didOverflow) {
+      setError('This resume is too long to fit legibly on one page without removing content. Shorten the text and try again.')
+      return
+    }
     for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
       pdf.setPage(pageNumber)
       pdf.setFont('helvetica', 'normal')
@@ -290,7 +317,8 @@ function App() {
   }
 
   function downloadResume() {
-    downloadTextAsPdf(resumeText, 'updated-resume.pdf', role)
+    setError('')
+    downloadTextAsPdf(resumeText, 'updated-resume.pdf', role, fitToOnePage)
   }
 
   async function openInterview() {
@@ -308,6 +336,7 @@ function App() {
     setFile(null)
     setJobDescription('')
     setResumeText('')
+    setFitToOnePage(false)
     setAtsResult(null)
     setAtsSuggestions([])
     setLearningPaths([])
@@ -387,17 +416,20 @@ function App() {
 
         {page === 'results' && analysis && <section className="results-page">
               <div className="results-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> YOUR RESULTS</div><h1>Resume <span>analysis.</span></h1><p>We found {analysis.comparison.matched_skills.length} of {analysis.comparison.matched_skills.length + analysis.comparison.missing_skills.length} requested skills in your resume. A missing skill means it was not found in the resume text.</p></div><div className="results-metrics"><div className="score-block"><div className="score-value">{analysis.comparison.similarity_score}<span>%</span></div><div className="score-label">SKILL MATCH</div><div className="score-track"><i style={{ width: `${analysis.comparison.similarity_score}%` }} /></div></div><div className="score-block ats-top-score"><div className="score-value">{atsResult ? atsResult.ats_score : advancedLoading.ats ? '…' : '--'}<span>{atsResult ? '/100' : ''}</span></div><div className="score-label">ATS ESTIMATE</div><div className="score-hint">Keywords + sections + format</div></div></div></div>
+          {analysis.resume.extraction_confidence !== 'high' && <div className="editor-note" role="status"><CircleHelp size={17} /><div><b>{analysis.resume.extraction_confidence === 'low' ? 'Limited resume text detected' : 'Resume extraction may be incomplete'}</b><span>We found {analysis.resume.word_count} words and {analysis.resume.detected_sections.length} recognizable sections. Check the extracted text before relying on the match results.</span></div></div>}
           <div className="results-grid grid">
             <SkillsSnapshot comparison={analysis.comparison} />
             <SuggestionsPanel suggestions={[...(analysis.suggestions || []), ...atsSuggestions]} selected={selected} onToggle={toggleSuggestion} onReview={applySuggestions} updating={updating} error={error} />
-            <ResumeSignals comparison={analysis.comparison} onInterview={openInterview} />
           </div>
-          <div className="advanced-features grid" aria-label="Advanced analysis">
+          <details className="more-insights">
+            <summary>More analysis and interview prep</summary>
+          <div className="advanced-features grid" aria-label="More analysis">
             <ATSPanel result={atsResult} loading={advancedLoading.ats} error={advancedErrors.ats} />
             <ResumeRewrite result={rewriteResult} loading={advancedLoading.rewrite} error={advancedErrors.rewrite} onApply={applyRewrite} onDownload={() => downloadTextAsPdf(rewriteResult?.rewritten, 'rewritten-resume.pdf', role)} applying={false} />
             <LearningPaths paths={learningPaths} loading={advancedLoading.learning} error={advancedErrors.learning} hasGaps={analysis.comparison.missing_skills.length > 0} />
           </div>
           <InterviewPreview tips={tips} loading={advancedLoading.interview} error={advancedErrors.interview} onOpen={openInterview} />
+          </details>
           <div className="results-bottom"><span>Made from your resume and this job description.</span><button className="text-button" onClick={() => setPage('upload')}><ArrowLeft size={15} /> Edit inputs</button></div>
         </section>}
 
@@ -407,8 +439,9 @@ function App() {
           {selected.some((item) => !appliedSkills.includes(item)) && <div className="editor-note"><Sparkles size={17} /><div><b>Other selections added as review notes</b><span>Review these prompts and edit or remove anything that does not reflect your experience.</span></div></div>}
           {appliedRewrite && <div className="editor-note"><Sparkles size={17} /><div><b>Role-specific draft applied</b><span>Review each change for accuracy. Replace metric prompts with verified results before downloading.</span></div></div>}
           {error && <p className="error-banner" role="alert">{error}</p>}
-          <div className="editor-toolbar"><span><PencilLine size={16} /> RESUME TEXT</span><span>{resumeText.trim().split(/\s+/).filter(Boolean).length} words</span></div>
-          <textarea className="resume-editor" value={resumeText} onChange={(event) => setResumeText(event.target.value)} aria-label="Editable resume text" />
+          <div className="editor-toolbar"><span><PencilLine size={16} /> RESUME TEXT{fitToOnePage ? ' · ONE-PAGE PDF LAYOUT' : ''}</span><span>{resumeText.trim().split(/\s+/).filter(Boolean).length} words</span></div>
+          <textarea className="resume-editor" value={resumeText} onChange={(event) => setResumeText(event.target.value)} aria-label="Editable resume text" disabled={chatBusy} />
+          <ResumeEditChat onSend={applyChatEdit} disabled={chatBusy} />
           <div className="editor-actions"><button className="button-secondary" onClick={() => setPage('results')}><ArrowLeft size={16} /> Back to insights</button><button className="button-primary" onClick={downloadResume}><ArrowDownToLine size={17} /> Download updated resume PDF</button></div>
         </section>}
 

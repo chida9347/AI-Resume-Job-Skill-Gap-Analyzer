@@ -8,6 +8,7 @@ class TextInput(BaseModel):
 class CompareInput(BaseModel):
     resume_skills: list[str]
     job_skills: list[str]
+    preferred_skills: list[str] = Field(default_factory=list, max_length=100)
 
 
 class SuggestionsInput(BaseModel):
@@ -41,6 +42,7 @@ class ATSScoreResponse(BaseModel):
     section_score: ATSSectionScore
     formatting_quality: int = Field(ge=0, le=100)
     feedback: list[str]
+    score_breakdown: dict[str, int] = Field(default_factory=dict)
 
 
 class LearningPathInput(BaseModel):
@@ -68,3 +70,17 @@ class RewriteResumeResponse(BaseModel):
     rewritten: str
     changes: list[str]
     method: str
+
+
+class ResumeEditInput(BaseModel):
+    resume_text: str = Field(min_length=1, max_length=100_000)
+    instruction: str = Field(min_length=1, max_length=2_000)
+
+
+class ResumeEditResponse(BaseModel):
+    updated_resume_text: str
+    reply: str
+    change_summary: str
+    changed: bool
+    method: str
+    fit_to_one_page: bool | None = None

@@ -1,9 +1,10 @@
 import unittest
 from unittest.mock import patch
 
-from services.analyzer import compare_skills, extract_skills, update_resume
+from services.analyzer import analyze_job_description, compare_skills, extract_skills, update_resume
 from services.ats_service import score_resume
 from services.learning_path_service import generate_learning_paths
+from services.resume_edit_service import edit_resume
 from services.rewrite_service import rewrite_resume
 
 
@@ -29,6 +30,25 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(result["matched_skills"], [])
         self.assertEqual(result["missing_skills"], [])
         self.assertEqual(result["similarity_score"], 0)
+
+    def test_job_description_separates_explicitly_preferred_skills(self):
+        result = analyze_job_description("Required qualifications:\nPython and SQL required.\nPreferred:\nDocker and AWS nice to have.")
+
+        self.assertEqual(result["required_skills"], ["python", "sql"])
+        self.assertEqual(result["preferred_skills"], ["aws", "docker"])
+        self.assertEqual(result["technical_skills"], ["python", "sql", "aws", "docker"])
+
+    def test_job_description_handles_required_and_preferred_on_one_line(self):
+        result = analyze_job_description("Required: Python and FastAPI. Preferred: Docker.")
+
+        self.assertEqual(result["required_skills"], ["python", "fastapi"])
+        self.assertEqual(result["preferred_skills"], ["docker"])
+
+    def test_compare_reports_preferred_skills_separately(self):
+        result = compare_skills(["python", "docker"], ["python"], ["docker", "aws"])
+
+        self.assertEqual(result["matched_preferred_skills"], ["docker"])
+        self.assertEqual(result["missing_preferred_skills"], ["aws"])
 
     def test_accepted_suggestions_are_review_notes_not_claims(self):
         result = update_resume("Existing experience", ["Review project work for Python examples"])
@@ -73,6 +93,8 @@ Bachelor of Science in Computer Science
         self.assertEqual(result["section_score"], {"skills": 100, "experience": 100, "education": 100})
         self.assertGreaterEqual(result["ats_score"], 0)
         self.assertLessEqual(result["ats_score"], 100)
+        self.assertEqual(sum(result["score_breakdown"].values()), result["ats_score"])
+        self.assertIn("required_skill_coverage", result["score_breakdown"])
 
     def test_ats_score_reports_empty_keyword_extraction(self):
         result = score_resume("Skills\nPython", "and or the with from")
@@ -95,6 +117,35 @@ Bachelor of Science in Computer Science
         self.assertEqual(len(paths), 1)
         self.assertEqual(len(paths[0]["roadmap"]), 4)
         self.assertIn("Custom tool", paths[0]["roadmap"][0])
+
+    def test_resume_chat_applies_literal_replacement(self):
+        result = edit_resume("SUMMARY\nBuilt web tools.\n", 'Replace "web tools" with "internal dashboards".')
+
+        self.assertEqual(result["updated_resume_text"], "SUMMARY\nBuilt internal dashboards.\n")
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["method"], "local")
+
+    def test_resume_chat_adds_user_text_under_existing_section(self):
+        result = edit_resume("SUMMARY\nDeveloper.\nEXPERIENCE\nBuilt APIs.\n", 'Add "Used weekly by the support team." to Experience.')
+
+        self.assertIn("EXPERIENCE\nUsed weekly by the support team.\nBuilt APIs.", result["updated_resume_text"])
+        self.assertTrue(result["changed"])
+
+    def test_resume_chat_does_not_mutate_unsupported_request(self):
+        resume = "SUMMARY\nDeveloper.\n"
+        result = edit_resume(resume, "Make me a senior engineer with five years of leadership experience.")
+
+        self.assertEqual(result["updated_resume_text"], resume)
+        self.assertFalse(result["changed"])
+        self.assertIn("No change was made", result["reply"])
+
+    def test_resume_chat_selects_one_page_export_without_dropping_content(self):
+        resume = "SUMMARY\nDeveloper with Python experience.\nEXPERIENCE\nBuilt useful tools.\n"
+        result = edit_resume(resume, "Please make this resume fit on only one page.")
+
+        self.assertEqual(result["updated_resume_text"], resume)
+        self.assertTrue(result["fit_to_one_page"])
+        self.assertIn("no resume content removed", result["change_summary"].lower())
 
     def test_rewriter_improves_experience_without_inventing_metrics(self):
         resume = """EXPERIENCE

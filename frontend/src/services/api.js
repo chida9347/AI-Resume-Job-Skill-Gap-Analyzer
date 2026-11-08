@@ -13,6 +13,7 @@ export async function analyzeResume(file, jobDescription) {
   const comparison = await api.post('/compare', {
     resume_skills: resume.data.skills,
     job_skills: job.data.required_skills,
+    preferred_skills: job.data.preferred_skills,
   })
   const suggestions = await api.post('/suggestions', {
     missing_skills: comparison.data.missing_skills,
@@ -52,6 +53,14 @@ export async function rewriteForRole(resumeText, jobDescription) {
   const response = await api.post('/rewrite-resume', {
     resume_text: resumeText,
     job_description: jobDescription,
+  })
+  return response.data
+}
+
+export async function editResumeChat(resumeText, instruction) {
+  const response = await api.post('/edit-resume', {
+    resume_text: resumeText,
+    instruction,
   })
   return response.data
 }

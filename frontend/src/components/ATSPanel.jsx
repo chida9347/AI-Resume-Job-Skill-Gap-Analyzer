@@ -13,10 +13,13 @@ export default function ATSPanel({ result, loading, error }) {
     {loading && <div className="feature-state"><span className="loading-dot" /> Checking resume wording, sections, and formatting…</div>}
     {error && <div className="feature-error" role="alert"><AlertCircle size={15} /> {error}</div>}
     {!loading && !error && result && <>
-      <div className="ats-summary"><ScoreRing score={result.ats_score} /><div className="ats-summary-copy"><b>Estimated ATS score</b><p>A guide based on words found, resume sections, and text layout. It is not a score from a real employer system.</p><div className="ats-subscore"><span>Job wording found</span><b>{result.keyword_match}%</b></div><div className="ats-subscore"><span>Text formatting</span><b>{result.formatting_quality}%</b></div></div></div>
+      <div className="ats-summary"><ScoreRing score={result.ats_score} /><div className="ats-summary-copy"><b>Estimated ATS score</b><p>A guide based on words found, resume sections, and text layout. It is not a score from a real employer system.</p><div className="ats-subscore"><span>Job wording found</span><b>{result.keyword_match}%</b></div></div></div>
+      <details className="ats-breakdown"><summary>See score details</summary>
       <div className="section-score-grid">{Object.entries(result.section_score).map(([name, score]) => <div className="section-score" key={name}><span>{name}</span><b>{score}%</b><i><em style={{ width: `${score}%` }} /></i></div>)}</div>
+      {result.score_breakdown && <div className="ats-feedback"><div className="feature-subheading"><span>Score contribution</span><small>points earned</small></div>{Object.entries(result.score_breakdown).map(([name, score]) => <p key={name}><FileCheck2 size={14} /><span>{name.replaceAll('_', ' ')}</span><b>{score}</b></p>)}</div>}
       <div className="keyword-block"><div className="feature-subheading"><span>Job words not found in resume</span><small>{result.missing_keywords.length}</small></div><div className="feature-tags">{result.missing_keywords.length ? result.missing_keywords.slice(0, 12).map((keyword) => <span className="feature-tag feature-tag-missing" key={keyword}>{keyword}</span>) : <span className="feature-empty">No missing keywords identified.</span>}</div></div>
       <div className="ats-feedback"><div className="feature-subheading"><span>Suggested fixes</span><CircleHelp size={14} /></div>{result.feedback.length ? result.feedback.slice(0, 6).map((item) => <p key={item}><FileCheck2 size={14} />{item.replace('Missing important keyword:', 'Job word not found in resume:')}</p>) : <p><CheckCircle2 size={14} />No immediate issues detected.</p>}</div>
+      </details>
     </>}
   </section>
 }

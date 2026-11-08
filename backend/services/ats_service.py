@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 
-from services.analyzer import SKILLS, extract_skills
+from services.analyzer import SKILLS, analyze_job_description, extract_skills
 
 
 _STOPWORDS = {
@@ -37,15 +37,9 @@ def _keyword_present(keyword: str, text: str) -> bool:
 
 
 def _extract_keywords(text: str) -> list[str]:
-    skill_keywords = extract_skills(text)
-    tokens = re.findall(r"[a-z][a-z0-9+#./-]*", text.lower())
-    counts = Counter(token.strip("./-") for token in tokens)
-    generic_keywords = [
-        token
-        for token, _ in sorted(counts.items(), key=lambda item: -item[1])
-        if len(token) >= 4 and token not in _STOPWORDS and not token.isdigit()
-    ]
-    return list(dict.fromkeys([*skill_keywords, *generic_keywords]))[:40]
+    # Restrict matching to the maintained competency taxonomy; frequent nouns
+    # such as "company" or "develop" are not useful ATS keywords.
+    return extract_skills(text)
 
 
 def _section_content(resume_text: str, heading_pattern: str) -> bool:
@@ -104,6 +98,11 @@ def score_resume(resume_text: str, job_description: str) -> dict:
     missing_keywords = [keyword for keyword in job_keywords if keyword not in matched_keywords]
     keyword_match = round(len(matched_keywords) / len(job_keywords) * 100) if job_keywords else 0
 
+    job_groups = analyze_job_description(job_description)
+    required = job_groups["required_skills"]
+    preferred = job_groups["preferred_skills"]
+    required_coverage = round(sum(_keyword_present(skill, resume_text) for skill in required) / len(required) * 100) if required else 0
+    preferred_coverage = round(sum(_keyword_present(skill, resume_text) for skill in preferred) / len(preferred) * 100) if preferred else 0
     sections = _section_scores(resume_text)
     section_average = (
         sections["skills"] * 0.30
@@ -111,7 +110,14 @@ def score_resume(resume_text: str, job_description: str) -> dict:
         + sections["education"] * 0.25
     )
     formatting = _formatting_quality(resume_text)
-    ats_score = round(keyword_match * 0.60 + section_average * 0.25 + formatting * 0.15)
+    breakdown = {
+        "keyword_relevance": round(keyword_match * 0.40),
+        "required_skill_coverage": round(required_coverage * 0.30),
+        "preferred_skill_coverage": round(preferred_coverage * 0.10),
+        "section_completeness": round(section_average * 0.10),
+        "formatting_readability": round(formatting * 0.10),
+    }
+    ats_score = min(100, sum(breakdown.values()))
 
     feedback = [f"Missing important keyword: {keyword}" for keyword in missing_keywords[:5]]
     if sections["skills"] < 70:
@@ -126,6 +132,10 @@ def score_resume(resume_text: str, job_description: str) -> dict:
         feedback.append("Improve text structure with concise bullets, consistent headings, and readable line lengths.")
     if not job_keywords:
         feedback.append("No relevant keywords could be identified from the job description.")
+    if required and required_coverage < 60:
+        feedback.append("Prioritize adding evidence for required skills you already use; do not list skills you cannot support.")
+    if preferred and preferred_coverage < 50:
+        feedback.append("Preferred skills contribute less to this estimate; include them only when your resume supports them.")
 
     return {
         "ats_score": ats_score,
@@ -136,4 +146,5 @@ def score_resume(resume_text: str, job_description: str) -> dict:
         "section_score": sections,
         "formatting_quality": formatting,
         "feedback": feedback,
+        "score_breakdown": breakdown,
     }
