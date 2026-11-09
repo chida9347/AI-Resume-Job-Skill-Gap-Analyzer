@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "description": "Hand-labelled resume/job pairs for evaluating skill extraction and matching. Labels describe what a careful human reviewer would accept as evidenced by the resume text. They are intentionally strict: a related or merely semantic match is not labelled as proven.",
+  "cases": [
+    {
+      "id": "backend-python",
+      "resume": "Avery Chen\navery@example.com\nSummary\nBackend engineer.\nSkills\nPython, FastAPI, PostgreSQL\nExperience\nSoftware Engineer, Acme Corp, 2021 - 2024\n- Built REST APIs in Python and FastAPI, improving response time by 20%.\nEducation\nBachelor of Science in Computer Science\nProjects\nRoleprint\n- Built a FastAPI service with PostgreSQL and React.",
+      "job": "Backend Engineer\nRequired: Python, FastAPI, PostgreSQL, Docker.\nPreferred: Kubernetes, AWS.\n3+ years of experience.\nBachelor degree required.",
+      "expected_required": ["python", "fastapi", "postgresql", "docker"],
+      "expected_preferred": ["kubernetes", "aws"],
+      "expected_matched_required": ["python", "fastapi", "postgresql"],
+      "expected_missing_required": ["docker"]
+    },
+    {
+      "id": "frontend-react",
+      "resume": "Jordan Lee\njordan@example.com\nSkills\nReact, TypeScript, CSS, Tailwind CSS\nExperience\nFrontend Engineer, Beta Ltd, 2022 - 2024\n- Built accessible dashboards in React and TypeScript, reducing load time by 30%.\nProjects\nPortfolio\n- Created a responsive CSS and Tailwind CSS interface.",
+      "job": "Frontend Engineer\nRequired: React, TypeScript, CSS.\nPreferred: Next.js.",
+      "expected_required": ["react", "typescript", "css"],
+      "expected_preferred": ["next.js"],
+      "expected_matched_required": ["react", "typescript", "css"],
+      "expected_missing_required": []
+    },
+    {
+      "id": "data-python-sql",
+      "resume": "Sam Patel\nsam@example.com\nSkills\nPython, SQL, pandas\nExperience\nData Analyst, Gamma, 2020 - 2024\n- Built ETL pipelines in Python and SQL, processing 2 million rows daily.",
+      "job": "Data Engineer\nRequired: Python, SQL, Airflow.\nPreferred: dbt.",
+      "expected_required": ["python", "sql", "airflow"],
+      "expected_preferred": ["dbt"],
+      "expected_matched_required": ["python", "sql"],
+      "expected_missing_required": ["airflow"]
+    },
+    {
+      "id": "devops-docker-aws",
+      "resume": "Riley Kim\nriley@example.com\nSkills\nDocker, AWS, Linux\nExperience\nDevOps Engineer, Delta, 2021 - 2024\n- Containerized services with Docker and deployed them to AWS, reducing deploy time by 40%.",
+      "job": "Platform Engineer\nRequired: Docker, Kubernetes, AWS.\nPreferred: Terraform.",
+      "expected_required": ["docker", "kubernetes", "aws"],
+      "expected_preferred": ["terraform"],
+      "expected_matched_required": ["docker", "aws"],
+      "expected_missing_required": ["kubernetes"]
+    },
+    {
+      "id": "react-implies-javascript",
+      "resume": "Casey Morgan\ncasey@example.com\nSkills\nReact.js\nExperience\nUI Engineer, Epsilon, 2022 - 2024\n- Built React.js interfaces for internal tools.",
+      "job": "JavaScript Engineer\nRequired: JavaScript, TypeScript.",
+      "expected_required": ["javascript", "typescript"],
+      "expected_preferred": [],
+      "expected_matched_required": ["javascript"],
+      "expected_partial_required": ["typescript"],
+      "expected_missing_required": []
+    },
+    {
+      "id": "synonym-postgres",
+      "resume": "Robin Shah\nrobin@example.com\nSkills\nPostgres\nExperience\nDatabase Engineer, Lambda, 2020 - 2024\n- Built services with Postgres and tuned slow queries.",
+      "job": "Database Engineer\nRequired: PostgreSQL.",
+      "expected_required": ["postgresql"],
+      "expected_preferred": [],
+      "expected_matched_required": ["postgresql"],
+      "expected_missing_required": []
+    },
+    {
+      "id": "implied-sql-from-postgresql",
+      "resume": "Robin Shah\nrobin@example.com\nSkills\nPostgreSQL\nExperience\nDatabase Engineer, Mu, 2020 - 2024\n- Built services with PostgreSQL and tuned slow queries.",
+      "job": "Database Engineer\nRequired: SQL.",
+      "expected_required": ["sql"],
+      "expected_preferred": [],
+      "expected_matched_required": ["sql"],
+      "expected_missing_required": []
+    },
+    {
+      "id": "java-is-not-javascript",
+      "resume": "Taylor Brooks\ntaylor@example.com\nSkills\nJava\nExperience\nBackend Engineer, Zeta, 2021 - 2024\n- Built Spring services in Java.",
+      "job": "JavaScript Engineer\nRequired: JavaScript.",
+      "expected_required": ["javascript"],
+      "expected_preferred": [],
+      "expected_matched_required": [],
+      "expected_missing_required": ["javascript"]
+    },
+    {
+      "id": "mysql-is-not-postgresql",
+      "resume": "Morgan Diaz\nmorgan@example.com\nSkills\nMySQL\nExperience\nDatabase Engineer, Eta, 2019 - 2024\n- Modelled schemas and tuned queries in MySQL.",
+      "job": "Database Engineer\nRequired: PostgreSQL.",
+      "expected_required": ["postgresql"],
+      "expected_preferred": [],
+      "expected_matched_required": [],
+      "expected_partial_required": ["postgresql"],
+      "expected_missing_required": []
+    },
+    {
+      "id": "listed-only-skill",
+      "resume": "Alex Chen\nalex@example.com\nSkills\nDocker, Python\nExperience\nSoftware Engineer, Theta, 2022 - 2024\n- Built APIs in Python.",
+      "job": "Backend Engineer\nRequired: Docker, Python.",
+      "expected_required": ["docker", "python"],
+      "expected_preferred": [],
+      "expected_matched_required": ["docker", "python"],
+      "expected_missing_required": []
+    },
+    {
+      "id": "no-required-skills",
+      "resume": "Drew Wilson\ndrew@example.com\nSkills\nCommunication, Python\nExperience\nAnalyst, Iota, 2021 - 2024\n- Presented findings to stakeholders.",
+      "job": "We are a friendly company building useful products for customers.",
+      "expected_required": [],
+      "expected_preferred": [],
+      "expected_matched_required": [],
+      "expected_missing_required": []
+    },
+    {
+      "id": "preferred-only",
+      "resume": "Jamie Rivera\njamie@example.com\nSkills\nPython, AWS\nExperience\nEngineer, Kappa, 2021 - 2024\n- Built Python services deployed to AWS.",
+      "job": "Backend Engineer\nPreferred: Python, AWS.",
+      "expected_required": [],
+      "expected_preferred": ["python", "aws"],
+      "expected_matched_required": [],
+      "expected_missing_required": []
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# Optional features. None of these are required for the core application.
+# Install only the extras you actually use.
+
+# AI resume rewriting (requires ENABLE_OPENAI_REWRITER=true and explicit consent).
+openai>=1.30
+
+# Local semantic similarity (never downloads a model implicitly).
+sentence-transformers>=2.7
+
+# OCR for scanned PDFs (also requires the Tesseract binary on the host).
+pytesseract>=0.3.10
+pdf2image>=1.17

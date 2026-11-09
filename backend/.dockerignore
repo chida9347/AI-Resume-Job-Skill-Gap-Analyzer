@@ -1,0 +1,14 @@
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+tests
+evaluation
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*

@@ -1,0 +1,69 @@
+# Roleprint production-like stack: PostgreSQL + FastAPI + nginx-served SPA.
+#
+#   1. Copy .env.example to .env and set JWT_SECRET and POSTGRES_PASSWORD.
+#   2. docker compose up --build
+#   3. Open http://localhost:8080
+#
+# The backend runs Alembic migrations before starting the API. Set
+# AUTO_CREATE_TABLES=false so schema changes go through migrations only.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: roleprint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roleprint}
+      POSTGRES_DB: roleprint
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roleprint -d roleprint"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+psycopg://roleprint:${POSTGRES_PASSWORD:-roleprint}@db:5432/roleprint
+      AUTO_CREATE_TABLES: "false"
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env before starting the stack}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_MINUTES: "30"
+      REFRESH_TOKEN_DAYS: "14"
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      ENABLE_RATE_LIMIT: "true"
+      RATE_LIMIT_REQUESTS: "120"
+      RATE_LIMIT_WINDOW_SECONDS: "60"
+      ENABLE_SEMANTIC_MATCHING: "true"
+      ENABLE_OCR: "false"
+      ENABLE_OPENAI_REWRITER: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers"
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  db_data:

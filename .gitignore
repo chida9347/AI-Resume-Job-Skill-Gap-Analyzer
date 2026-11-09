@@ -7,6 +7,9 @@ venv/
 # Node and build output
 node_modules/
 dist/
+.npm-cache/
+.task-temp/
+.task-packages/
 
 # Local environment and editor configuration
 .env
@@ -14,5 +17,14 @@ dist/
 !.env.example
 .vscode/
 
-# Generated resume exports
+# Generated resume exports and local databases
 *.pdf
+*.db
+*.sqlite
+*.sqlite3
+
+# Test and tooling caches
+.pytest_cache/
+coverage/
+.coverage
+htmlcov/
