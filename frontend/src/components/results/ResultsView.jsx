@@ -3,13 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowRight,
-  BarChart3,
   BriefcaseBusiness,
   CircleHelp,
   FileText,
-  LoaderCircle,
   PencilLine,
-  Sparkles,
   Target,
 } from 'lucide-react'
 import ATSPanel from '../ATSPanel.jsx'
@@ -18,53 +15,31 @@ import LearningPaths from '../LearningPaths.jsx'
 import ResumeRewrite from '../ResumeRewrite.jsx'
 import SkillsSnapshot from '../SkillsSnapshot.jsx'
 import SuggestionsPanel from '../SuggestionsPanel.jsx'
-import { CoverageChart } from '../charts/ResultsCharts.jsx'
 import { useWorkspace } from '../../context/WorkspaceContext.jsx'
-import { analysisCounts, atsFeedbackAsSuggestions, interviewFromAnalysis } from '../../utils/analysis.js'
+import { analysisCounts, interviewFromAnalysis } from '../../utils/analysis.js'
 import { getErrorMessage } from '../../utils/errors.js'
 import { downloadTextAsPdf } from '../../utils/pdf.js'
 
-function JobSummary({ job }) {
-  if (!job || (!job.title && !job.company && !job.required_skills?.length)) return null
-  const required = job.required_skills || []
-  const preferred = job.preferred_skills || []
-  return (
-    <section className="result-panel job-summary-panel">
-      <div className="panel-heading">
-        <div><span className="panel-kicker">04 / TARGET ROLE</span><h2>{job.title || 'Target role'}</h2></div>
-        <BriefcaseBusiness size={19} />
-      </div>
-      {job.company && <p className="job-company">{job.company}</p>}
-      <div className="job-summary-stats">
-        <div><b>{required.length}</b><span>required skills</span></div>
-        <div><b>{preferred.length}</b><span>preferred skills</span></div>
-        <div><b>{job.experience?.min_years ?? '—'}</b><span>years requested</span></div>
-      </div>
-      {job.education?.required && <p className="job-detail"><b>Education:</b> a degree or diploma is requested.</p>}
-      {job.warnings?.length > 0 && (
-        <div className="job-warning"><CircleHelp size={14} /><span>{job.warnings[0]}</span></div>
-      )}
-    </section>
-  )
-}
-
 export default function ResultsView({ analysis, saved = false, savedAt = '' }) {
   const navigate = useNavigate()
-  const { applySuggestions, applyRewrite, resumeText, role, fitToOnePage } = useWorkspace()
+  const { applySuggestions, applyRewrite, resumeText, role } = useWorkspace()
   const [selected, setSelected] = useState([])
   const [applying, setApplying] = useState(false)
   const [actionError, setActionError] = useState('')
 
   const comparison = analysis?.comparison || {}
   const ats = analysis?.ats || null
+  const job = analysis?.job || {}
   const interview = useMemo(() => interviewFromAnalysis(analysis), [analysis])
   const learningPaths = analysis?.learning_paths || []
   const counts = analysisCounts(analysis)
-  const suggestions = useMemo(
-    () => [...(analysis?.suggestions || []), ...atsFeedbackAsSuggestions(ats)],
-    [analysis, ats],
-  )
+  const suggestions = useMemo(() => analysis?.suggestions || [], [analysis])
   const rewrite = analysis?.rewrite || null
+  const atsScore = Number.isFinite(Number(ats?.ats_score)) ? Number(ats.ats_score) : null
+  const requiredTotal = counts.total
+  const preferredTotal = (job.preferred_skills || []).length
+  const roleTitle = job.title || analysis?.interview?.role || role || 'Target role'
+  const hasGaps = counts.missing > 0 || counts.partial > 0
   const resumeConfidence =
     analysis?.meta?.resume_confidence ??
     analysis?.structured_resume?.confidence ??
@@ -74,6 +49,19 @@ export default function ResultsView({ analysis, saved = false, savedAt = '' }) {
   const detectedSections = Object.entries(analysis?.structured_resume?.section_presence || {})
     .filter(([, present]) => present)
     .map(([key]) => key)
+
+  const summaryParts = []
+  if (requiredTotal > 0) {
+    summaryParts.push(`${counts.matched} of ${requiredTotal} required skills are explicitly evidenced in the resume text.`)
+  } else {
+    summaryParts.push('The resume text was compared with the job description.')
+  }
+  if (counts.partial > 0) {
+    summaryParts.push(
+      `${counts.partial} related skill${counts.partial === 1 ? ' is' : 's are'} shown separately and do not count as proven experience.`,
+    )
+  }
+  if (savedAt) summaryParts.push(`Saved ${savedAt}.`)
 
   function toggleSuggestion(id) {
     setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
@@ -113,28 +101,73 @@ export default function ResultsView({ analysis, saved = false, savedAt = '' }) {
 
   return (
     <section className="results-page">
-      <div className="results-heading">
-        <div>
+      <header className="results-heading">
+        <div className="results-heading-copy">
           <div className="eyebrow"><span className="eyebrow-line" /> {saved ? 'SAVED ANALYSIS' : 'YOUR RESULTS'}</div>
           <h1>{saved ? <>Saved <span>analysis.</span></> : <>Resume <span>analysis.</span></>}</h1>
+          <p className="results-summary">{summaryParts.join(' ')}</p>
+          {(job.title || job.company || requiredTotal > 0) && (
+            <div className="results-role">
+              <BriefcaseBusiness size={15} />
+              <span><b>{roleTitle}</b>{job.company ? ` · ${job.company}` : ''}</span>
+              {requiredTotal > 0 && (
+                <span className="results-role-meta">
+                  {requiredTotal} required{preferredTotal > 0 ? ` · ${preferredTotal} preferred` : ''}
+                </span>
+              )}
+            </div>
+          )}
+          {job.warnings?.length > 0 && (
+            <p className="results-role-warning"><CircleHelp size={14} /><span>{job.warnings[0]}</span></p>
+          )}
+        </div>
+        <div className="results-heading-actions">
+          {!saved && resumeText && (
+            <button className="button-primary" type="button" onClick={() => navigate('/editor')}>
+              <PencilLine size={16} /> Edit resume
+            </button>
+          )}
+          <button className="button-secondary" type="button" onClick={() => navigate('/roadmap')}>
+            <Target size={16} /> Learning roadmap
+          </button>
+          <button className="button-secondary" type="button" onClick={() => navigate('/jobs')}>
+            <BriefcaseBusiness size={16} /> Compare jobs
+          </button>
+        </div>
+      </header>
+
+      <div className="results-overview" aria-label="Analysis summary">
+        <article className="overview-stat">
+          <span className="overview-label">Skill match</span>
+          <div className="overview-value">{counts.skillMatch}<small>%</small></div>
           <p>
-            {counts.matched} of {counts.total} requested skills are evidenced in the resume text.
-            {counts.partial > 0 ? ` ${counts.partial} related skill${counts.partial === 1 ? '' : 's'} are shown separately and do not count as proven experience.` : ''}
-            {savedAt ? ` Saved ${savedAt}.` : ''}
+            {requiredTotal > 0
+              ? `${counts.matched} of ${requiredTotal} required skills evidenced`
+              : 'No required skills detected in the job description'}
           </p>
-        </div>
-        <div className="results-metrics">
-          <div className="score-block">
-            <div className="score-value">{counts.skillMatch}<span>%</span></div>
-            <div className="score-label">SKILL MATCH</div>
-            <div className="score-track"><i style={{ width: `${counts.skillMatch}%` }} /></div>
+          <div className="score-track" aria-hidden="true">
+            <i style={{ width: `${Math.max(0, Math.min(100, counts.skillMatch))}%` }} />
           </div>
-          <div className="score-block ats-top-score">
-            <div className="score-value">{ats ? ats.ats_score : '--'}<span>{ats ? '/100' : ''}</span></div>
-            <div className="score-label">ATS ESTIMATE</div>
-            <div className="score-hint">Keywords + sections + format</div>
+        </article>
+        <article className="overview-stat">
+          <span className="overview-label">ATS estimate</span>
+          <div className="overview-value">
+            {atsScore !== null ? atsScore : '—'}
+            {atsScore !== null && <small>/100</small>}
           </div>
-        </div>
+          <p>{atsScore !== null ? 'Keywords, sections and formatting' : 'No ATS estimate for this analysis'}</p>
+        </article>
+        <article className={`overview-stat ${counts.missing > 0 ? 'is-alert' : ''}`}>
+          <span className="overview-label">Gaps to close</span>
+          <div className="overview-value">{requiredTotal > 0 ? counts.missing : '—'}</div>
+          <p>
+            {requiredTotal === 0
+              ? 'Run an analysis with a job description'
+              : counts.partial > 0
+                ? `${counts.partial} related skill${counts.partial === 1 ? '' : 's'} detected separately`
+                : 'Required skills not found in the resume'}
+          </p>
+        </article>
       </div>
 
       {saved && (
@@ -161,7 +194,7 @@ export default function ResultsView({ analysis, saved = false, savedAt = '' }) {
         </div>
       )}
 
-      <div className="results-grid grid">
+      <div className="results-main-grid">
         <SkillsSnapshot comparison={comparison} />
         <SuggestionsPanel
           suggestions={suggestions}
@@ -174,60 +207,20 @@ export default function ResultsView({ analysis, saved = false, savedAt = '' }) {
         />
       </div>
 
-      <div className="results-visuals">
-        <section className="result-panel chart-panel">
-          <div className="panel-heading">
-            <div><span className="panel-kicker">03 / COVERAGE</span><h2>Coverage at a glance</h2></div>
-            <BarChart3 size={19} />
-          </div>
-          <CoverageChart comparison={comparison} ats={ats} />
-        </section>
-        <JobSummary job={analysis?.job} />
-        {!analysis?.job?.title && (
-          <section className="result-panel chart-panel">
-            <div className="panel-heading">
-              <div><span className="panel-kicker">04 / WHAT THIS MEANS</span><h2>How to read this report</h2></div>
-              <Target size={19} />
-            </div>
-            <div className="reading-guide">
-              <p><b>Skill match</b> counts required skills explicitly evidenced in your resume text.</p>
-              <p><b>Partial matches</b> are related skills, never proof that you used the required skill.</p>
-              <p><b>ATS estimate</b> is an explainable estimate capped below a perfect score when evidence is missing.</p>
-            </div>
-          </section>
-        )}
-      </div>
+      <ATSPanel
+        result={ats}
+        loading={false}
+        error={saved && !ats?.ats_score ? 'No ATS detail was stored with this saved analysis.' : ''}
+      />
 
-      <details className="more-insights" open>
-        <summary>Detailed analysis, rewrite and interview prep</summary>
-        <div className="advanced-features grid" aria-label="More analysis">
-          <ATSPanel result={ats} loading={false} error={saved && !ats?.ats_score ? 'No ATS detail was stored with this analysis.' : ''} />
-          {rewrite && (
-            <ResumeRewrite
-              result={rewrite}
-              loading={false}
-              error={analysis?.rewriteError || ''}
-              onApply={handleApplyRewrite}
-              onDownload={handleDownloadRewrite}
-              applying={false}
-            />
-          )}
-          {analysis?.rewriteError && (
-            <section className="advanced-card rewrite-card">
-              <div className="advanced-card-heading">
-                <div><span className="panel-kicker">06 / ROLE ALIGNMENT</span><h2>Resume Rewrite</h2></div>
-                <Sparkles size={19} />
-              </div>
-              <div className="feature-error" role="alert"><CircleHelp size={15} /> {analysis.rewriteError}</div>
-            </section>
-          )}
-          <LearningPaths
-            paths={learningPaths}
-            loading={false}
-            error=""
-            hasGaps={(comparison.missing_required || comparison.missing_skills || []).length > 0 || (comparison.partial_required || []).length > 0}
-          />
-        </div>
+      <div className="results-support-grid">
+        <LearningPaths
+          paths={learningPaths}
+          loading={false}
+          error=""
+          hasGaps={hasGaps}
+          title="Build missing skills"
+        />
         {interview.questions.length > 0 ? (
           <InterviewPreview
             tips={{ role: interview.role, questions: interview.questions.map((item) => ({ ...item, example_answer: item.framework })), tips: interview.tips }}
@@ -236,36 +229,59 @@ export default function ResultsView({ analysis, saved = false, savedAt = '' }) {
             onOpen={() => navigate('/interview')}
           />
         ) : (
-          <section className="interview-preview">
+          <section className="interview-preview interview-preview-empty">
             <div className="interview-preview-heading">
-              <div><span className="panel-kicker">04 / PREPARE</span><h2>Interview questions</h2><p>Saved analyses do not include the generated question set.</p></div>
-              <Link className="button-secondary" to="/analyze">Run a new analysis <ArrowRight size={15} /></Link>
+              <div>
+                <span className="panel-kicker">INTERVIEW PREP</span>
+                <h2>Practice for this role</h2>
+                <p>
+                  {saved
+                    ? 'Saved analyses do not include the generated question set.'
+                    : 'No interview questions were generated for this analysis.'}
+                </p>
+              </div>
             </div>
+            <Link className="button-secondary" to="/analyze">Run a new analysis <ArrowRight size={15} /></Link>
           </section>
         )}
-      </details>
-
-      <div className="results-actions">
-        {!saved && resumeText && (
-          <button className="button-primary" type="button" onClick={() => navigate('/editor')}>
-            <PencilLine size={16} /> Edit resume
-          </button>
-        )}
-        <button className="button-secondary" type="button" onClick={() => navigate('/roadmap')}>
-          <Target size={16} /> Learning roadmap
-        </button>
-        <button className="button-secondary" type="button" onClick={() => navigate('/interview')}>
-          <Sparkles size={16} /> Mock interview
-        </button>
-        <button className="button-secondary" type="button" onClick={() => navigate('/jobs')}>
-          <BriefcaseBusiness size={16} /> Compare jobs
-        </button>
-        {applying && <span className="inline-status"><LoaderCircle className="spin" size={15} /> Updating resume…</span>}
       </div>
 
+      {rewrite ? (
+        <details className="results-rewrite">
+          <summary>Optional: resume rewrite draft</summary>
+          <ResumeRewrite
+            result={rewrite}
+            loading={false}
+            error={analysis?.rewriteError || ''}
+            onApply={handleApplyRewrite}
+            onDownload={handleDownloadRewrite}
+            applying={false}
+          />
+        </details>
+      ) : analysis?.rewriteError ? (
+        <section className="advanced-card rewrite-card">
+          <div className="advanced-card-heading">
+            <div><span className="panel-kicker">OPTIONAL DRAFT</span><h2>Resume rewrite</h2></div>
+            <FileText size={19} />
+          </div>
+          <div className="feature-error" role="alert"><CircleHelp size={15} /> {analysis.rewriteError}</div>
+        </section>
+      ) : null}
+
+      <details className="results-about">
+        <summary>About these scores</summary>
+        <div className="results-about-grid">
+          <p><b>Skill match</b> counts required skills explicitly evidenced in the resume text. Related skills are shown separately and never count as proof.</p>
+          <p><b>ATS estimate</b> is an explainable guide based on keywords, sections and formatting. It is not a result from an employer system.</p>
+          <p><b>Learning and interview prompts</b> are practice suggestions generated from the supplied role, not guarantees or real employer questions.</p>
+        </div>
+      </details>
+
       <div className="results-bottom">
-        <span>Made from your resume and this job description. Scores are estimates, not employer ATS results.</span>
-        <Link className="text-button" to="/analyze"><ArrowLeft size={15} /> Edit inputs</Link>
+        <span>Estimates use only the resume and job text you supplied.</span>
+        <Link className="text-button" to="/analyze">
+          <ArrowLeft size={15} /> {saved ? 'Run a new analysis' : 'Edit inputs'}
+        </Link>
       </div>
     </section>
   )

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ScanSearch } from 'lucide-react'
+import { ScanSearch } from 'lucide-react'
 import ResultsView from '../components/results/ResultsView.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
 import { useWorkspace } from '../context/WorkspaceContext.jsx'
@@ -33,9 +33,6 @@ export default function ResultsPage() {
       )}
       {saveWarning && <p className="error-banner" role="alert">{saveWarning}</p>}
       <ResultsView analysis={analysis} />
-      <div className="results-next">
-        <Link className="button-secondary" to="/analyze">Run another analysis <ArrowRight size={15} /></Link>
-      </div>
     </section>
   )
 }

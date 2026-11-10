@@ -46,7 +46,7 @@ export default function LearningPaths({ paths, loading, error, hasGaps, title = 
   return (
     <section className="advanced-card learning-card">
       <div className="advanced-card-heading">
-        <div><span className="panel-kicker">05 / BUILD THE GAP</span><h2>{title}</h2></div>
+        <div><span className="panel-kicker">LEARNING PLAN</span><h2>{title}</h2></div>
         <BookOpenCheck size={19} />
       </div>
       <p className="advanced-card-intro">Turn role gaps into small, practical learning goals. These are study suggestions, not endorsements of a course.</p>

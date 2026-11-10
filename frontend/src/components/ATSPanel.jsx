@@ -19,7 +19,7 @@ export default function ATSPanel({ result, loading, error }) {
   return (
     <section className="advanced-card ats-card">
       <div className="advanced-card-heading">
-        <div><span className="panel-kicker">04 / RECRUITER LENS</span><h2>ATS Simulation</h2></div>
+        <div><span className="panel-kicker">ATS ESTIMATE</span><h2>How the resume scores</h2></div>
         <SearchCheck size={19} />
       </div>
       {loading && <div className="feature-state"><span className="loading-dot" /> Checking resume wording, sections, and formatting…</div>}
@@ -29,7 +29,7 @@ export default function ATSPanel({ result, loading, error }) {
           <div className="ats-summary">
             <ScoreRing score={result.ats_score} />
             <div className="ats-summary-copy">
-              <b>Estimated ATS score</b>
+              <b>An explainable estimate</b>
               <p>A guide based on words found, resume sections, and text layout. It is not a score from a real employer system.</p>
               <div className="ats-subscore"><span>Job wording found</span><b>{result.keyword_match}%</b></div>
               {typeof result.confidence === 'number' && (
@@ -49,7 +49,7 @@ export default function ATSPanel({ result, loading, error }) {
           )}
 
           <details className="ats-breakdown">
-            <summary>See score details</summary>
+            <summary>Score breakdown, keywords and fixes</summary>
             <div className="section-score-grid">
               {Object.entries(result.section_score || {}).map(([name, score]) => (
                 <div className="section-score" key={name}>

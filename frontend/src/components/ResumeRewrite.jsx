@@ -5,8 +5,8 @@ export default function ResumeRewrite({ result, loading, error, onApply, onDownl
   const hasChanges = result?.rewritten !== result?.original
 
   return <section className="advanced-card rewrite-card">
-    <div className="advanced-card-heading"><div><span className="panel-kicker">06 / ROLE ALIGNMENT</span><h2>Resume Rewrite</h2></div><Sparkles size={19} /></div>
-    <p className="advanced-card-intro">Review the draft before applying it to your editable resume.</p>
+    <div className="advanced-card-heading"><div><span className="panel-kicker">OPTIONAL DRAFT</span><h2>Resume rewrite</h2></div><Sparkles size={19} /></div>
+    <p className="advanced-card-intro">Review the draft before applying it to your editable resume. Check every claim for accuracy.</p>
     {loading && <div className="feature-state"><LoaderCircle className="spin" size={16} /> Rewriting relevant experience…</div>}
     {error && <div className="feature-error" role="alert"><AlertCircle size={15} /> {error}</div>}
     {!loading && !error && result && <>

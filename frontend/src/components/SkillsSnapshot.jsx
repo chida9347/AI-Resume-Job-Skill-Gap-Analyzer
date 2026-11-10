@@ -17,13 +17,14 @@ export default function SkillsSnapshot({ comparison }) {
   return (
     <section className="result-panel skills-panel">
       <div className="panel-heading">
-        <div><span className="panel-kicker">01 / SKILLS</span><h2>Skills snapshot</h2></div>
+        <div><span className="panel-kicker">SKILL EVIDENCE</span><h2>What the resume proves</h2></div>
         <Target size={19} />
       </div>
+      <p className="panel-intro">Only skills explicitly supported by the resume wording count as matches.</p>
 
       <div className="skill-group">
         <h3>
-          <span className="status-dot dot-green" /> Found in both
+          <span className="status-dot dot-green" /> Explicit matches
           <span className="count-pill">{matched.length}</span>
         </h3>
         <div className="skill-list">
@@ -61,7 +62,7 @@ export default function SkillsSnapshot({ comparison }) {
       <div className="panel-divider" />
       <div className="skill-group">
         <h3>
-          <span className="status-dot dot-coral" /> Not found in resume
+          <span className="status-dot dot-coral" /> Missing from the resume
           <span className="count-pill">{missing.length}</span>
         </h3>
         <div className="skill-list">

@@ -1,18 +1,31 @@
-import React from 'react'
-import { ArrowRight, Check, LoaderCircle, Sparkles } from 'lucide-react'
+import React, { useState } from 'react'
+import { ArrowRight, Check, ChevronDown, LoaderCircle, Sparkles } from 'lucide-react'
 
-export default function SuggestionsPanel({ suggestions, selected, onToggle, onReview, updating, error, disabled = false }) {
+export default function SuggestionsPanel({
+  suggestions,
+  selected,
+  onToggle,
+  onReview,
+  updating,
+  error,
+  disabled = false,
+  maxVisible = 3,
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? suggestions : suggestions.slice(0, maxVisible)
+  const hiddenCount = Math.max(0, suggestions.length - maxVisible)
+
   return (
     <section className="result-panel suggestion-panel">
       <div className="panel-heading">
-        <div><span className="panel-kicker">02 / NEXT STEPS</span><h2>Resume changes to consider</h2></div>
+        <div><span className="panel-kicker">NEXT STEPS</span><h2>Close the gaps</h2></div>
         <Sparkles size={19} />
       </div>
       <p className="panel-intro">
-        Check a skill only if you have it. Confirmed skills are added to your resume; other selections become review notes.
+        Check a skill only if you can genuinely support it. Confirmed skills are added to your resume; other selections become review notes.
       </p>
       <div className="suggestion-list">
-        {suggestions.length ? suggestions.map((suggestion) => (
+        {visible.length ? visible.map((suggestion) => (
           <label
             key={suggestion.id}
             className={`suggestion-row ${selected.includes(suggestion.id) ? 'suggestion-selected' : ''}`}
@@ -27,6 +40,12 @@ export default function SuggestionsPanel({ suggestions, selected, onToggle, onRe
           </label>
         )) : <p className="empty-note">Nothing to add. Your skills align with the role.</p>}
       </div>
+      {hiddenCount > 0 && (
+        <button className="suggestion-toggle" type="button" onClick={() => setExpanded((value) => !value)}>
+          <ChevronDown className={expanded ? 'is-open' : ''} size={15} />
+          {expanded ? 'Show fewer suggestions' : `Show ${hiddenCount} more suggestion${hiddenCount === 1 ? '' : 's'}`}
+        </button>
+      )}
       {error && <p className="error-banner" role="alert">{error}</p>}
       <button
         className="button-secondary suggestion-action"

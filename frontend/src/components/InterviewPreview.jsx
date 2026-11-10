@@ -4,7 +4,7 @@ import { AlertCircle, ArrowRight, MessageCircleQuestion } from 'lucide-react'
 export default function InterviewPreview({ tips, loading, error, onOpen }) {
   return <section className="interview-preview">
     <div className="interview-preview-heading">
-      <div><span className="panel-kicker">04 / PREPARE</span><h2>Interview questions</h2><p>Use these to practice explaining your experience for this role.</p></div>
+      <div><span className="panel-kicker">INTERVIEW PREP</span><h2>Practice for this role</h2><p>Use these prompts to practise explaining your experience.</p></div>
       <button className="button-secondary" onClick={onOpen}>View interview prep <ArrowRight size={15} /></button>
     </div>
     {loading && <div className="feature-state"><span className="loading-dot" /> Preparing role-specific questions…</div>}
