@@ -42,7 +42,6 @@ __all__ = [
     "update_resume",
 ]
 
-
 def _contains_phrase(text: str, phrase: str) -> bool:
     pattern = r"(?<![A-Za-z0-9])" + re.escape(phrase.strip()) + r"(?![A-Za-z0-9])"
     return re.search(pattern, text, flags=re.IGNORECASE) is not None
