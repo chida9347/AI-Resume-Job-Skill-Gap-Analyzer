@@ -228,8 +228,8 @@ The repository is also deployed without Compose:
 
 | Component | Host | Notes |
 | --- | --- | --- |
-| API + PostgreSQL | Render, Virginia | Docker service `roleprint-api`, root directory `backend`. The image runs `alembic upgrade head` and then uvicorn on `$PORT`. |
-| SPA | Vercel | Vite build with `VITE_API_URL=https://roleprint-api.onrender.com` and the SPA rewrite from `frontend/vercel.json`. |
+| API + PostgreSQL | Render, Virginia | Docker service `roleprint-api`, root directory `backend`. The image runs `alembic upgrade head` and then uvicorn on `$PORT`. Live at https://roleprint-api.onrender.com. |
+| SPA | Vercel | Vite build with `VITE_API_URL=https://roleprint-api.onrender.com` and the SPA rewrite from `frontend/vercel.json`. Live at https://roleprint-eight.vercel.app. |
 
 Configuration that differs from Compose:
 

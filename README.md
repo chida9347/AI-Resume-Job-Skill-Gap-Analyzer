@@ -16,6 +16,19 @@ sentence-transformer similarity are optional and disabled by default.
 
 ---
 
+## Live deployment
+
+- App: https://roleprint-eight.vercel.app
+- API health: https://roleprint-api.onrender.com/health
+- Stack: Vercel (SPA) and Render (Docker API + PostgreSQL, Virginia)
+
+Both hosts run on free plans. The API spins down after inactivity, so the first
+request can take up to a minute. The free PostgreSQL instance expires on
+2026-12-10. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the configuration
+and the upgrade path.
+
+---
+
 ## What it does
 
 | Area | Behaviour |
