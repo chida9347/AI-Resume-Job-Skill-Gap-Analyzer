@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -58,6 +58,20 @@ class Settings(BaseSettings):
 
     # Optional OCR. Requires pytesseract + the tesseract binary.
     enable_ocr: bool = False
+
+    @field_validator("database_url")
+    @classmethod
+    def _normalise_database_url(cls, value: str) -> str:
+        """Accept the generic Postgres URLs handed out by managed hosts.
+
+        Railway, Render and Heroku expose ``postgres://`` or plain
+        ``postgresql://`` URLs. SQLAlchemy would try to load psycopg2 for those;
+        this project ships psycopg 3, so rewrite the driver explicitly.
+        """
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix):]
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:

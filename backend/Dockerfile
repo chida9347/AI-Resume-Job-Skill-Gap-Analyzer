@@ -37,5 +37,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
     CMD curl -fsS http://127.0.0.1:8000/health || exit 1
 
-# Compose overrides this command to run `alembic upgrade head` first.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Compose overrides this command to run `alembic upgrade head` first. The shell
+# form also lets managed hosts (Railway, Render) inject their own $PORT.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

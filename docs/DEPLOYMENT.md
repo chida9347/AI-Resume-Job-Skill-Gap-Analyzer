@@ -222,6 +222,28 @@ Then, in the browser:
 4. Delete the test account.
 5. Confirm errors include a request ID and no resume text appears in logs.
 
+### Managed hosting (Render + Vercel)
+
+The repository is also deployed without Compose:
+
+| Component | Host | Notes |
+| --- | --- | --- |
+| API + PostgreSQL | Render, Virginia | Docker service `roleprint-api`, root directory `backend`. The image runs `alembic upgrade head` and then uvicorn on `$PORT`. |
+| SPA | Vercel | Vite build with `VITE_API_URL=https://roleprint-api.onrender.com` and the SPA rewrite from `frontend/vercel.json`. |
+
+Configuration that differs from Compose:
+
+```dotenv
+DATABASE_URL=postgresql://...   # Render internal URL; config.py rewrites it to psycopg 3
+CORS_ORIGINS=https://<your-app>.vercel.app
+ENABLE_SEMANTIC_MATCHING=false  # no sentence-transformers model in the image
+AUTO_CREATE_TABLES=false
+```
+
+Free-plan caveats: the API spins down after inactivity (first request is slow),
+and the free PostgreSQL instance expires after 30 days. Upgrade both before
+using the deployment for anything real.
+
 ---
 
 ## 10. Troubleshooting
