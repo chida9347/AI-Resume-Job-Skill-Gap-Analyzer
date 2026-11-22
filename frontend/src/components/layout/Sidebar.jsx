@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   History,
   LayoutDashboard,
+  LayoutTemplate,
   LogOut,
   MessageCircleQuestion,
   ScanSearch,
@@ -32,6 +33,7 @@ const groups = [
       { to: '/jobs', label: 'Compare roles', icon: BriefcaseBusiness },
       { to: '/interview', label: 'Interview prep', icon: MessageCircleQuestion },
       { to: '/roadmap', label: 'Learning roadmap', icon: BookOpenCheck },
+      { to: '/builder', label: 'Resume builder', icon: LayoutTemplate },
     ],
   },
   {

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout.jsx'
+import BuilderPage from './pages/BuilderPage.jsx'
 import PageLoader from './components/ui/PageLoader.jsx'
 import ProtectedRoute from './components/ui/ProtectedRoute.jsx'
 import { useAuth } from './context/AuthContext.jsx'
@@ -34,6 +35,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="builder" element={<BuilderPage />} />
         <Route path="analyze" element={<AnalyzePage />} />
         <Route path="results" element={<ResultsPage />} />
         <Route path="editor" element={<EditorPage />} />

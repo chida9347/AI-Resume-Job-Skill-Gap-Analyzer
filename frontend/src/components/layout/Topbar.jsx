@@ -13,6 +13,7 @@ const titles = {
   '/roadmap': { kicker: 'Career tools', title: 'Learning roadmap' },
   '/interview': { kicker: 'Career tools', title: 'Interview prep' },
   '/jobs': { kicker: 'Career tools', title: 'Compare roles' },
+  '/builder': { kicker: 'Career tools', title: 'Resume builder' },
   '/history': { kicker: 'Workspace', title: 'History' },
   '/profile': { kicker: 'Account', title: 'Profile' },
   '/settings': { kicker: 'Account', title: 'Settings' },

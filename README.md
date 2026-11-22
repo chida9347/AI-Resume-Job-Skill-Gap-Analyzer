@@ -41,6 +41,7 @@ and the upgrade path.
 | Learning roadmap | Stage-based plans for missing and partial skills, with objectives, concepts, exercises and project ideas. |
 | Interview prep | Role- and resume-grounded questions, answer frameworks, expected concepts and heuristic answer feedback. |
 | Editing | Review-first suggestions, rule-based rewrite draft, chat-style edits with explicit quoted replacements, and PDF export of reviewed text. |
+| Resume builder | ATS-friendly single-column templates (Classic, Modern Minimal, Executive One-Page) with a live preview. Generates plain-text resume content from the details the user enters. |
 | Accounts | Registration, login, refresh-token rotation, logout, profile, password change, data export, history clearing and account deletion. |
 | History | Saved resumes, jobs, analyses and interview sessions, isolated per user. Analyses are read-only snapshots. |
 
@@ -77,10 +78,10 @@ backend/
   evaluation/        hand-labelled dataset and metrics script
   tests/             pytest suite
 frontend/
-  src/pages/         landing, auth, analyze, results, editor, roadmap,
+  src/pages/         landing, auth, analyze, results, editor, builder, roadmap,
                      interview, jobs, history, saved analysis, profile,
                      settings, 404
-  src/components/    reusable UI, results panels, charts, layout
+  src/components/    reusable UI, results panels, charts, layout, resume builder
   src/context/       auth and workspace state
   src/services/      auth-aware API client and token store
   src/utils/         analysis normalisation, formatting, errors, PDF export

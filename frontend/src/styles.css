@@ -1229,6 +1229,7 @@ body {
 .shell-content > .roadmap-page,
 .shell-content > .saved-analysis-page,
 .shell-content > .dashboard-page,
+.shell-content > .builder-page,
 .shell-content > .notfound-page {
   padding-top: 0;
   padding-bottom: 0;
@@ -2409,4 +2410,212 @@ body {
   .auth-panel { padding: 28px 18px 44px; }
   .auth-card-head h2 { font-size: 28px; }
   .shell-footer { padding: 16px; font-size: 8.5px; }
+}
+
+/* =========================================================================
+   v3 — resume builder
+   ========================================================================= */
+
+.rb {
+  display: grid;
+  gap: 22px;
+}
+
+.rb-templates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.rb-template-card {
+  position: relative;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  text-align: left;
+  background: var(--v3-surface);
+  border: 1px solid var(--v3-line);
+  border-radius: 16px;
+  box-shadow: var(--v3-shadow);
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.rb-template-card:hover { border-color: #c8d5c0; transform: translateY(-2px); }
+
+.rb-template-card.is-selected {
+  border-color: #9cb45e;
+  background: linear-gradient(180deg, #fbfdf6, #f3f8e7);
+  box-shadow: 0 0 0 3px rgba(156, 180, 94, .18), var(--v3-shadow);
+}
+
+.rb-template-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--v3-green);
+  background: var(--v3-leaf-soft);
+  border-radius: 11px;
+}
+
+.rb-template-name { color: var(--v3-ink); font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
+.rb-template-tagline { color: var(--v3-muted); font-size: 11.5px; line-height: 1.5; }
+
+.rb-template-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 3px 8px;
+  color: #4a6238;
+  background: var(--v3-leaf-soft);
+  border: 1px solid #dbe7bf;
+  border-radius: 999px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.rb-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rb-form {
+  display: grid;
+  gap: 18px;
+}
+
+.rb-form-section {
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  background: var(--v3-surface);
+  border: 1px solid var(--v3-line);
+  border-radius: 18px;
+  box-shadow: var(--v3-shadow);
+}
+
+.rb-form-kicker {
+  color: #7d8a70;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .15em;
+}
+
+.rb-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rb-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+.rb-field { display: grid; gap: 6px; }
+.rb-field > span { color: #3d4c44; font-size: 11.5px; font-weight: 600; }
+.rb-hint { margin: -4px 0 0; color: var(--v3-faint); font-size: 10.5px; }
+
+.rb-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--v3-line-strong);
+  border-radius: 10px;
+  color: var(--v3-ink);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.rb-input:focus { border-color: #7d9757; box-shadow: 0 0 0 4px rgba(125, 151, 87, .14); }
+.rb-textarea { resize: vertical; line-height: 1.55; }
+
+.rb-experience-list { display: grid; gap: 12px; }
+.rb-experience {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  background: #fafbf7;
+  border: 1px solid var(--v3-line);
+  border-radius: 14px;
+}
+
+.rb-row-actions { display: flex; gap: 8px; }
+
+.rb-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rb-button-ghost {
+  color: #5d7350;
+  background: #fff;
+  border: 1px solid var(--v3-line-strong);
+}
+
+.rb-button-ghost:hover:not(:disabled) { background: #f2f5ec; color: var(--v3-green); }
+.rb-button-ghost:disabled { opacity: .45; cursor: not-allowed; }
+
+.rb-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.rb-note {
+  margin: 0;
+  color: var(--v3-faint);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.rb-preview-panel {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  background: var(--v3-surface);
+  border: 1px solid var(--v3-line);
+  border-radius: 18px;
+  box-shadow: var(--v3-shadow);
+}
+
+.rb-preview {
+  min-height: 320px;
+  padding: 20px;
+  background: #fbfcf8;
+  border: 1px solid var(--v3-line);
+  border-radius: 14px;
+}
+
+.rb-preview-heading {
+  margin: 14px 0 6px;
+  color: var(--v3-green);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.rb-preview-heading:first-child { margin-top: 0; }
+
+.rb-preview-line { margin: 0; color: #3c4a42; font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; }
+.rb-preview-line.is-bullet { padding-left: 14px; position: relative; }
+.rb-preview-line.is-bullet::before { content: '-'; position: absolute; left: 0; color: #9cb45e; font-weight: 700; }
+
+/* Responsive ------------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .rb-grid { grid-template-columns: 1fr; }
+  .rb-preview-panel { position: static; }
+}
+
+@media (max-width: 900px) {
+  .rb-templates { grid-template-columns: 1fr; }
+  .rb-grid-2, .rb-grid-3 { grid-template-columns: 1fr; }
 }

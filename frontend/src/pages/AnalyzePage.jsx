@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, CircleHelp, FileText, LoaderCircle, LockKeyhole, Sparkles } from 'lucide-react'
 import UploadCard from '../components/UploadCard.jsx'
 import JobInput from '../components/JobInput.jsx'
@@ -11,6 +11,7 @@ const MIN_RESUME_LENGTH = 40
 
 export default function AnalyzePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated } = useAuth()
   const {
     file,
@@ -20,6 +21,7 @@ export default function AnalyzePage() {
     progress,
     error,
     analysis,
+    resumeText,
     setFile,
     setJobDescription,
     setRole,
@@ -30,6 +32,12 @@ export default function AnalyzePage() {
   const [pastedResume, setPastedResume] = useState('')
   const [saveHistory, setSaveHistory] = useState(true)
   const [localError, setLocalError] = useState('')
+
+  useEffect(() => {
+    if (location.state?.fromBuilder && resumeText) {
+      setPastedResume(resumeText)
+    }
+  }, [location.state, resumeText])
 
   function chooseFile(nextFile) {
     if (!nextFile) return
