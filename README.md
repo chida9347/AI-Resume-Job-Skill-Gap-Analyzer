@@ -118,8 +118,9 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL (normally <http://localhost:5173>). Analysis works without an
-account. Sign in to save analyses and use history, profile and settings.
+Open the Vite URL (normally <http://localhost:5173>). The web app opens on the
+sign-in screen. Create an account to enter the dashboard and workspace; the API
+still accepts anonymous analysis requests for integrations.
 
 ### 3. Tests
 
@@ -197,7 +198,8 @@ interview sessions. Compose runs `alembic upgrade head` automatically.
 
 ## API overview
 
-Public analysis endpoints (no account required):
+Public analysis endpoints (no account required). The web app itself requires
+sign-in; these routes stay public for API compatibility and integrations:
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -248,7 +250,8 @@ cross-user access returns `404`.
 
 ## Privacy and data handling
 
-- Anonymous analysis does not persist resume text.
+- Anonymous API analysis does not persist resume text. The web app requires an
+  account before any resume is submitted.
 - Resume text is processed in memory. Saved resumes store text only when the
   user explicitly saves them while signed in.
 - Saved analyses are snapshots of computed results; they do not include the

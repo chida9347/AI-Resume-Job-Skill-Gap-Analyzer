@@ -216,10 +216,10 @@ curl https://resume.example.com/api/health
 
 Then, in the browser:
 
-1. Run an anonymous analysis from paste and from upload.
-2. Register an account and confirm login and refresh.
+1. Sign in, then run an analysis from paste and from upload.
+2. Register a second account and confirm login and refresh.
 3. Save an analysis, reopen it from history, export data, clear history.
-4. Delete the test account.
+4. Delete the test accounts.
 5. Confirm errors include a request ID and no resume text appears in logs.
 
 ### Managed hosting (Render + Vercel)

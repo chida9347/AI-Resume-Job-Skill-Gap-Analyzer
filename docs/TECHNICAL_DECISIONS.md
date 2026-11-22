@@ -10,10 +10,11 @@ keeps the original "clone and run" promise. Docker Compose and the deployment gu
 PostgreSQL. SQLAlchemy 2.0 and Alembic work with both. JSON columns are used for computed
 artefacts (comparison, ATS, suggestions) because they are snapshots, not relational entities.
 
-## 3. Anonymous analysis remains available
-The original product required no account. Requiring login for the core flow would be a
-regression. Analysis endpoints stay public; saving, history and mock-interview tracking
-require authentication. This also avoids storing resumes for anonymous users.
+## 3. Authentication-first web app, public analysis API
+The web app opens on sign-in and only exposes the dashboard and workspace to
+authenticated users. The analysis endpoints remain public so existing API
+clients and integrations keep working, and anonymous API calls still avoid
+storing resumes. Saving, history and mock-interview tracking require an account.
 
 ## 4. Skill taxonomy is explicit and version-controlled
 A hand-curated taxonomy is auditable, testable, and works offline. Aliases are matched with

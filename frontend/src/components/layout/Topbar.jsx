@@ -1,118 +1,64 @@
-import React, { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
-import {
-  BriefcaseBusiness,
-  History,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  ScanSearch,
-  Settings,
-  Target,
-  UserRound,
-  X,
-} from 'lucide-react'
-import { useAuth } from '../../context/AuthContext.jsx'
+import React from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { Menu, ShieldCheck, Target } from 'lucide-react'
 import { useWorkspace } from '../../context/WorkspaceContext.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { initials } from '../../utils/format.js'
 
-const links = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/analyze', label: 'Analyze', icon: ScanSearch },
-  { to: '/jobs', label: 'Compare jobs', icon: BriefcaseBusiness },
-]
+const titles = {
+  '/dashboard': { kicker: 'Workspace', title: 'Dashboard' },
+  '/analyze': { kicker: 'New analysis', title: 'Analyze a resume' },
+  '/results': { kicker: 'Analysis', title: 'Results' },
+  '/editor': { kicker: 'Draft', title: 'Resume editor' },
+  '/roadmap': { kicker: 'Career tools', title: 'Learning roadmap' },
+  '/interview': { kicker: 'Career tools', title: 'Interview prep' },
+  '/jobs': { kicker: 'Career tools', title: 'Compare roles' },
+  '/history': { kicker: 'Workspace', title: 'History' },
+  '/profile': { kicker: 'Account', title: 'Profile' },
+  '/settings': { kicker: 'Account', title: 'Settings' },
+}
 
-export default function Topbar() {
-  const { user, logout } = useAuth()
+function titleFor(pathname) {
+  if (titles[pathname]) return titles[pathname]
+  if (pathname.startsWith('/analyses/')) return { kicker: 'Saved analysis', title: 'Snapshot' }
+  return { kicker: 'Roleprint', title: 'Workspace' }
+}
+
+export default function Topbar({ onMenu, navOpen = false }) {
+  const { pathname } = useLocation()
   const { hasAnalysis } = useWorkspace()
-  const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
-
-  async function handleLogout() {
-    setOpen(false)
-    await logout()
-    navigate('/')
-  }
+  const { user } = useAuth()
+  const meta = titleFor(pathname)
 
   return (
-    <header className="topbar">
-      <Link className="wordmark" to="/" aria-label="Roleprint home" onClick={() => setOpen(false)}>
-        <span className="brand-mark"><Target size={19} strokeWidth={2.4} /></span>
-        <span>roleprint<span className="brand-period">.</span></span>
-      </Link>
-
+    <header className="shell-topbar">
       <button
-        className="topbar-menu"
+        className="topbar-burger"
         type="button"
-        aria-expanded={open}
-        aria-label={open ? 'Close navigation' : 'Open navigation'}
-        onClick={() => setOpen((value) => !value)}
+        onClick={onMenu}
+        aria-label="Open navigation"
+        aria-expanded={navOpen}
+        aria-controls="workspace-sidebar"
       >
-        {open ? <X size={20} /> : <Menu size={20} />}
+        <Menu size={20} />
       </button>
 
-      <nav className={`topnav ${open ? 'is-open' : ''}`} aria-label="Main navigation">
-        {links.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `topnav-link ${isActive ? 'is-active' : ''}`}
-            onClick={() => setOpen(false)}
-          >
-            <Icon size={15} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-        {hasAnalysis && (
-          <NavLink
-            to="/results"
-            className={({ isActive }) => `topnav-link ${isActive ? 'is-active' : ''}`}
-            onClick={() => setOpen(false)}
-          >
-            <Target size={15} />
-            <span>Current results</span>
-          </NavLink>
-        )}
-        {user && (
-          <NavLink
-            to="/history"
-            className={({ isActive }) => `topnav-link ${isActive ? 'is-active' : ''}`}
-            onClick={() => setOpen(false)}
-          >
-            <History size={15} />
-            <span>History</span>
-          </NavLink>
-        )}
-      </nav>
+      <div className="topbar-heading">
+        <span>{meta.kicker}</span>
+        <h1>{meta.title}</h1>
+      </div>
 
-      <div className="topbar-right">
-        <span className="privacy-note"><span className="privacy-dot" /> Private by design</span>
-        {user ? (
-          <div className="user-menu">
-            <Link className="user-chip" to="/profile" onClick={() => setOpen(false)}>
-              <span className="user-avatar">{initials(user.full_name, user.email)}</span>
-              <span className="user-chip-copy">
-                <b>{user.full_name || 'Your account'}</b>
-                <small>{user.email}</small>
-              </span>
-            </Link>
-            <Link className="icon-link" to="/settings" aria-label="Settings" title="Settings" onClick={() => setOpen(false)}>
-              <Settings size={16} />
-            </Link>
-            <button className="icon-link" type="button" onClick={handleLogout} aria-label="Sign out" title="Sign out">
-              <LogOut size={16} />
-            </button>
-          </div>
-        ) : (
-          <div className="auth-links">
-            <Link className="text-button" to="/login" onClick={() => setOpen(false)}>
-              <UserRound size={15} /> Sign in
-            </Link>
-            <Link className="button-primary topbar-cta" to="/register" onClick={() => setOpen(false)}>
-              Create account
-            </Link>
-          </div>
+      <div className="topbar-actions">
+        {hasAnalysis && pathname !== '/results' && (
+          <Link className="topbar-pill" to="/results">
+            <Target size={14} />
+            Current results
+          </Link>
         )}
+        <span className="topbar-privacy"><ShieldCheck size={14} /> Private workspace</span>
+        <Link className="topbar-avatar" to="/profile" aria-label="Open profile">
+          {initials(user?.full_name, user?.email)}
+        </Link>
       </div>
     </header>
   )

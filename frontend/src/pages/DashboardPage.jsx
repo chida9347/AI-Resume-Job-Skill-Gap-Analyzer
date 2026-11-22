@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  BookOpenCheck,
   BriefcaseBusiness,
   FileText,
   History,
   MessageCircleQuestion,
   ScanSearch,
+  Settings,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react'
 import PageLoader from '../components/ui/PageLoader.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
@@ -18,6 +19,12 @@ import { getErrorMessage } from '../utils/errors.js'
 import { formatDate, pluralise } from '../utils/format.js'
 
 const emptyData = { analyses: [], resumes: [], jobs: [], interviews: [] }
+
+function greetingFor(hour) {
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -57,121 +64,142 @@ export default function DashboardPage() {
 
   const stats = useMemo(
     () => [
-      { label: 'Saved analyses', value: data.analyses.length, icon: ScanSearch, to: '/history' },
-      { label: 'Saved resumes', value: data.resumes.length, icon: FileText, to: '/history?tab=resumes' },
-      { label: 'Saved roles', value: data.jobs.length, icon: BriefcaseBusiness, to: '/history?tab=jobs' },
-      { label: 'Practice sets', value: data.interviews.length, icon: MessageCircleQuestion, to: '/history?tab=interviews' },
+      { label: 'Saved analyses', value: data.analyses.length, icon: ScanSearch, to: '/history', hint: 'Read-only snapshots' },
+      { label: 'Resumes', value: data.resumes.length, icon: FileText, to: '/history?tab=resumes', hint: 'Stored privately' },
+      { label: 'Roles', value: data.jobs.length, icon: BriefcaseBusiness, to: '/history?tab=jobs', hint: 'Saved job posts' },
+      { label: 'Practice sets', value: data.interviews.length, icon: MessageCircleQuestion, to: '/history?tab=interviews', hint: 'Interview questions' },
     ],
     [data],
   )
 
-  if (loading) return <PageLoader label="Loading your workspace…" />
+  if (loading) return <PageLoader label="Loading your workspace..." />
 
   const firstName = (user?.full_name || user?.email || '').split(/[\s@]/)[0]
+  const latest = data.analyses[0]
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <section className="dashboard-page">
-      <div className="page-heading dashboard-heading">
-        <div>
-          <div className="eyebrow"><span className="eyebrow-line" /> YOUR WORKSPACE</div>
-          <h1>{firstName ? <>Welcome back, <span>{firstName}.</span></> : <>Your <span>workspace.</span></>}</h1>
-          <p>Everything you save stays private to your account. Start a new analysis or pick up where you left off.</p>
-        </div>
-        <Link className="button-primary" to="/analyze"><ScanSearch size={16} /> New analysis</Link>
-      </div>
-
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
-      <div className="stat-grid">
-        {stats.map(({ label, value, icon: Icon, to }) => (
-          <Link className="stat-card" to={to} key={label}>
-            <span className="stat-icon"><Icon size={18} /></span>
+      <div className="dash-hero">
+        <div className="dash-hero-copy">
+          <span className="dash-date">{today}</span>
+          <h1>{greetingFor(new Date().getHours())}, <span>{firstName || 'there'}.</span></h1>
+          <p>Start a fresh comparison, line up several roles, or reopen one of your saved snapshots.</p>
+          <div className="dash-hero-actions">
+            <Link className="button-primary" to="/analyze"><ScanSearch size={16} /> Start a new analysis</Link>
+            <Link className="button-secondary" to="/jobs"><BriefcaseBusiness size={16} /> Compare roles</Link>
+          </div>
+        </div>
+
+        <div className="dash-hero-card">
+          {latest ? (
+            <>
+              <span className="dash-card-label">LATEST ANALYSIS</span>
+              <b>{latest.role || 'Untitled role'}</b>
+              <span className="dash-card-meta">{formatDate(latest.created_at)}</span>
+              <Link className="dash-card-link" to={`/analyses/${latest.id}`}>
+                Open snapshot <ArrowRight size={15} />
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="dash-card-label">GET STARTED</span>
+              <ol className="dash-checklist">
+                <li><span>1</span> Add your resume</li>
+                <li><span>2</span> Paste a job description</li>
+                <li><span>3</span> Read the evidence</li>
+              </ol>
+              <Link className="dash-card-link" to="/analyze">
+                Run your first analysis <ArrowRight size={15} />
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="dash-stats">
+        {stats.map(({ label, value, icon: Icon, to, hint }) => (
+          <Link className="dash-stat" to={to} key={label}>
+            <span className="dash-stat-icon"><Icon size={18} /></span>
             <b>{value}</b>
-            <span>{label}</span>
+            <span className="dash-stat-label">{label}</span>
+            <small>{hint}</small>
           </Link>
         ))}
       </div>
 
-      <div className="dashboard-grid">
-        <section className="dashboard-panel">
-          <div className="panel-heading">
+      <div className="dash-columns">
+        <section className="dash-panel dash-recent">
+          <header className="dash-panel-head">
             <div><span className="panel-kicker">RECENT WORK</span><h2>Saved analyses</h2></div>
             <Link className="text-button" to="/history">View all <ArrowRight size={15} /></Link>
-          </div>
+          </header>
           {data.analyses.length ? (
-            <ul className="record-list">
+            <ul className="dash-record-list">
               {data.analyses.slice(0, 5).map((item) => (
                 <li key={item.id}>
-                  <Link className="record-row" to={`/analyses/${item.id}`}>
-                    <span className="record-icon"><ScanSearch size={16} /></span>
-                    <span className="record-copy">
+                  <Link className="dash-record" to={`/analyses/${item.id}`}>
+                    <span className="dash-record-icon"><ScanSearch size={16} /></span>
+                    <span className="dash-record-copy">
                       <b>{item.role || 'Untitled role'}</b>
                       <small>{formatDate(item.created_at)}</small>
                     </span>
+                    <span className="dash-record-badge">Snapshot</span>
                     <ArrowRight size={15} />
                   </Link>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="dashboard-empty">
-              <p>No saved analyses yet. Run an analysis while signed in to keep a snapshot.</p>
+            <div className="dash-empty">
+              <span className="dash-empty-icon"><History size={20} /></span>
+              <div>
+                <b>No saved analyses yet</b>
+                <p>Run an analysis and keep the report in your private history.</p>
+              </div>
               <Link className="button-secondary" to="/analyze">Analyze a resume <ArrowRight size={15} /></Link>
             </div>
           )}
         </section>
 
-        <section className="dashboard-panel">
-          <div className="panel-heading">
-            <div><span className="panel-kicker">PRACTICE</span><h2>Recent interview sets</h2></div>
-            <Link className="text-button" to="/history?tab=interviews">View all <ArrowRight size={15} /></Link>
-          </div>
-          {data.interviews.length ? (
-            <ul className="record-list">
-              {data.interviews.slice(0, 5).map((item) => (
-                <li key={item.id}>
-                  <Link className="record-row" to="/interview">
-                    <span className="record-icon"><MessageCircleQuestion size={16} /></span>
-                    <span className="record-copy">
-                      <b>{item.role || 'Practice set'}</b>
-                      <small>
-                        {formatDate(item.created_at)} · {pluralise(item.question_count, 'question')}
-                        {item.completed ? ' · completed' : ''}
-                      </small>
-                    </span>
-                    <ArrowRight size={15} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="dashboard-empty">
-              <p>No saved practice sets yet. Generate questions from an analysis and save the set.</p>
-              <Link className="button-secondary" to="/interview">Open interview prep <ArrowRight size={15} /></Link>
-            </div>
-          )}
-        </section>
+        <aside className="dash-side">
+          <section className="dash-panel">
+            <header className="dash-panel-head">
+              <div><span className="panel-kicker">PRACTICE</span><h2>Recent sets</h2></div>
+              <Link className="text-button" to="/history?tab=interviews">View all</Link>
+            </header>
+            {data.interviews.length ? (
+              <ul className="dash-mini-list">
+                {data.interviews.slice(0, 3).map((item) => (
+                  <li key={item.id}>
+                    <Link to="/interview">
+                      <span className="dash-record-icon"><MessageCircleQuestion size={15} /></span>
+                      <span>
+                        <b>{item.role || 'Practice set'}</b>
+                        <small>{pluralise(item.question_count, 'question')}{item.completed ? ' · completed' : ''}</small>
+                      </span>
+                      <ArrowRight size={14} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="dash-muted">No practice sets yet. Generate questions from a live analysis.</p>
+            )}
+          </section>
+
+          <section className="dash-panel dash-links">
+            <span className="panel-kicker">SHORTCUTS</span>
+            <Link to="/interview"><MessageCircleQuestion size={16} /> Interview prep <ArrowRight size={15} /></Link>
+            <Link to="/roadmap"><BookOpenCheck size={16} /> Learning roadmap <ArrowRight size={15} /></Link>
+            <Link to="/settings"><Settings size={16} /> Privacy &amp; data <ArrowRight size={15} /></Link>
+          </section>
+        </aside>
       </div>
 
-      <div className="dashboard-actions">
-        <Link className="action-card" to="/analyze">
-          <span className="action-icon"><Sparkles size={19} /></span>
-          <div><b>Run a new analysis</b><span>Compare one resume with one job posting.</span></div>
-          <ArrowRight size={17} />
-        </Link>
-        <Link className="action-card" to="/jobs">
-          <span className="action-icon"><BriefcaseBusiness size={19} /></span>
-          <div><b>Compare several roles</b><span>Rank up to 25 postings with transparent components.</span></div>
-          <ArrowRight size={17} />
-        </Link>
-        <Link className="action-card" to="/history">
-          <span className="action-icon"><History size={19} /></span>
-          <div><b>Review your history</b><span>Reopen, export or delete saved data.</span></div>
-          <ArrowRight size={17} />
-        </Link>
-      </div>
-
-      <p className="dashboard-privacy"><ShieldCheck size={15} /> Analyses are read-only snapshots. Resume text and rewrite drafts are not stored with them.</p>
+      <p className="dash-privacy"><ShieldCheck size={15} /> Analyses are read-only snapshots. Resume text and rewrite drafts are not stored with them.</p>
     </section>
   )
 }
